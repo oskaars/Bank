@@ -3,11 +3,11 @@ So everything is in the master branch
 
 
 So far u can:
--Register and get unique account number
--Log in 
--Add money 
--Subtract money
--Check for account balance
+ - Register and get unique account number
+ - Log in 
+ - Add money 
+ - Subtract money
+ - Check for account balance
 
 
 In the next versions:
