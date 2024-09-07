@@ -6,35 +6,37 @@
 #include <sstream>
 #include <cstdlib> // For system()
 
+using namespace std;
+
 class User {
 public:
-    std::string username;
-    std::string password;
-    std::string accountNumber;
+    string username;
+    string password;
+    string accountNumber;
     double balance;
 
-    User(std::string user, std::string pass) : username(user), password(pass), balance(0.0) {
+    User(string user, string pass) : username(user), password(pass), balance(0.0) {
         accountNumber = generateAccountNumber();
     }
 
-    std::string generateAccountNumber() {
-        std::random_device rd;
-        std::mt19937 mt(rd());
-        std::uniform_int_distribution<int> dist(100000, 999999);
-        return "ACC" + std::to_string(dist(mt));
+    string generateAccountNumber() {
+        random_device rd;
+        mt19937 mt(rd());
+        uniform_int_distribution<int> dist(100000, 999999);
+        return "ACC" + to_string(dist(mt));
     }
 };
 
 class BankingApp {
 private:
-    std::vector<User> users;
+    vector<User> users;
 
     void loadUsers() {
-        std::ifstream file("users.txt");
-        std::string line;
-        while (std::getline(file, line)) {
-            std::istringstream iss(line);
-            std::string username, password, accountNumber;
+        ifstream file("users.txt");
+        string line;
+        while (getline(file, line)) {
+            istringstream iss(line);
+            string username, password, accountNumber;
             double balance;
             if (iss >> username >> password >> accountNumber >> balance) {
                 User user(username, password);
@@ -47,7 +49,7 @@ private:
     }
 
     void saveUsers() {
-        std::ofstream file("users.txt");
+        ofstream file("users.txt");
         for (const auto& user : users) {
             file << user.username << " " << user.password << " " 
                  << user.accountNumber << " " << user.balance << "\n";
@@ -61,25 +63,24 @@ public:
     }
 
     void clearScreen() {
-        // Clear the console screen
         #ifdef _WIN32
-            system("cls"); // For Windows
+            system("cls");
         #else
-            system("clear"); // For Linux and macOS
+            system("clear");
         #endif
     }
 
     void registerUser() {
         clearScreen();
-        std::string username, password;
-        std::cout << "Enter username: ";
-        std::cin >> username;
-        std::cout << "Enter password: ";
-        std::cin >> password;
+        string username, password;
+        cout << "Enter username: ";
+        cin >> username;
+        cout << "Enter password: ";
+        cin >> password;
 
         for (const auto& user : users) {
             if (user.username == username) {
-                std::cout << "Username already exists!\n";
+                cout << "Username already exists!\n";
                 return;
             }
         }
@@ -87,76 +88,128 @@ public:
         User newUser(username, password);
         users.push_back(newUser);
         saveUsers();
-        std::cout << "Registration successful! Your account number is " << newUser.accountNumber << "\n";
+        cout << "Registration successful! Your account number is " << newUser.accountNumber << "\n";
     }
 
     User* loginUser() {
         clearScreen();
-        std::string username, password;
-        std::cout << "Enter username: ";
-        std::cin >> username;
-        std::cout << "Enter password: ";
-        std::cin >> password;
+        string username, password;
+        cout << "Enter username: ";
+        cin >> username;
+        cout << "Enter password: ";
+        cin >> password;
 
         for (auto& user : users) {
             if (user.username == username && user.password == password) {
-                std::cout << "Login successful!\n";
+                cout << "Login successful!\n";
                 return &user;
             }
         }
-        std::cout << "Invalid username or password!\n";
+        cout << "Invalid username or password!\n";
         return nullptr;
     }
 
     void viewAccountDetails(User* user) {
         clearScreen();
-        std::cout << "Account Number: " << user->accountNumber << "\n";
-        std::cout << "Current Balance: $" << user->balance << "\n";
+        cout << "Account Number: " << user->accountNumber << "\n";
+        cout << "Current Balance: $" << user->balance << "\n";
     }
 
     void withdrawMoney(User* user) {
         clearScreen();
         double amount;
-        std::cout << "Enter amount to withdraw: ";
-        std::cin >> amount;
+        cout << "Enter amount to withdraw: ";
+        cin >> amount;
         if (amount <= user->balance) {
             user->balance -= amount;
             saveUsers();
-            std::cout << "Withdrawal successful! New balance: $" << user->balance << "\n";
+            cout << "Withdrawal successful! New balance: $" << user->balance << "\n";
         } else {
-            std::cout << "Insufficient funds!\n";
+            cout << "Insufficient funds!\n";
         }
     }
 
     void depositMoney(User* user) {
         clearScreen();
         double amount;
-        std::cout << "Enter amount to deposit: ";
-        std::cin >> amount;
+        cout << "Enter amount to deposit: ";
+        cin >> amount;
         user->balance += amount;
         saveUsers();
-        std::cout << "Deposit successful! New balance: $" << user->balance << "\n";
+        cout << "Deposit successful! New balance: $" << user->balance << "\n";
     }
+
+void transferMoney(User* sender) {
+    clearScreen();
+    
+    if (users.empty()) {
+        cout << "No other users are registered yet.\n";
+        return;
+    }
+    
+    listAllUsers();  // Wyświetlenie listy użytkowników
+
+    string receiverAccount;
+    double amount;
+    cout << "\nEnter recipient's account number: ";
+    cin >> receiverAccount;
+    cout << "Enter amount to transfer: ";
+    cin >> amount;
+
+    if (amount > sender->balance) {
+        cout << "Insufficient funds!\n";
+        return;
+    }
+
+    User* receiver = nullptr;
+    for (auto& user : users) {
+        if (user.accountNumber == receiverAccount) {
+            receiver = &user;
+            break;
+        }
+    }
+
+    if (!receiver) {
+        cout << "Recipient account number not found!\n";
+        return;
+    }
+
+    sender->balance -= amount;
+    receiver->balance += amount;
+    saveUsers();
+    cout << "Transfer successful! New balance: $" << sender->balance << "\n";
+}
+
+void listAllUsers() {
+    cout << "\nRegistered Users:\n";
+    for (const auto& user : users) {
+        cout << "Username: " << user.username 
+                  << ", Account Number: " << user.accountNumber << "\n";
+    }
+}
+
 
     void showMenu(User* user) {
         int choice;
         do {
             clearScreen();
-            std::cout << "\n1. View Account Details\n";
-            std::cout << "2. Withdraw Money\n";
-            std::cout << "3. Deposit Money\n";
-            std::cout << "4. Logout\n";
-            std::cout << "Enter your choice: ";
-            std::cin >> choice;
+            cout << "\n1. View Account Details\n";
+            cout << "2. Withdraw Money\n";
+            cout << "3. Deposit Money\n";
+            cout << "4. Transfer Money\n";
+            cout << "5. Logout\n";
+            cout << "Enter your choice: ";
+            cin >> choice;
 
             switch (choice) {
                 case 1: viewAccountDetails(user); break;
                 case 2: withdrawMoney(user); break;
                 case 3: depositMoney(user); break;
-                case 4: std::cout << "Logging out...\n"; break;
-                default: std::cout << "Invalid choice! Please try again.\n";
+                case 4: transferMoney(user); break;
+                case 5: cout << "Logging out...\n"; break;
+                default: cout << "Invalid choice! Please try again.\n";
             }
-        } while (choice != 4);
+        } while (choice != 5);
     }
 };
 
@@ -166,32 +219,29 @@ int main() {
     User* loggedInUser = nullptr;
 
     do {
-        app.clearScreen();
         if (!loggedInUser) {
-            std::cout << "\n1. Register\n";
-            std::cout << "2. Login\n";
-            std::cout << "3. Exit\n";
-            std::cout << "Enter your choice: ";
-            std::cin >> option;
+            app.clearScreen();
+            cout << "\n1. Register\n";
+            cout << "2. Login\n";
+            cout << "3. Exit\n";
+            cout << "Enter your choice: ";
+            cin >> option;
 
             switch (option) {
                 case 1: 
-                    system("cls");
                     app.registerUser(); 
                     break;
                 case 2: 
-                    system("cls");
                     loggedInUser = app.loginUser();
                     if (loggedInUser) {
                         app.showMenu(loggedInUser);
                     }
                     break;
                 case 3: 
-                    system("cls");
-                    std::cout << "Exiting...\n"; 
+                    cout << "Exiting...\n"; 
                     break;
                 default: 
-                    std::cout << "Invalid choice! Please try again.\n";
+                    cout << "Invalid choice! Please try again.\n";
             }
         } else {
             app.showMenu(loggedInUser);
